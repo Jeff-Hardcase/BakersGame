@@ -12,14 +12,15 @@ namespace BakersGame
         private Point cardStartLocation;
 
         private readonly string cardControlNamePrefix = "cardBox";
+        private readonly string cardDeck = "Anglo";
 
         //initial values
-        private readonly int theTop = 170;
+        private readonly int theTop = 320;
         private readonly int theLeft = 120;
-        private readonly int theWidth = 88;
-        private readonly int theHeight = 137;
-        private readonly int theWidthOffset = 12;
-        private readonly int theHeightOffset = 30;
+        private readonly int theWidth = 176;
+        private readonly int theHeight = 274;
+        private readonly int theWidthOffset = 25;
+        private readonly int theHeightOffset = 60;
 
         public BakersGameForm()
         {
@@ -38,7 +39,7 @@ namespace BakersGame
             //create a hand to play from a file
             var sourceFolder = "D:\\Jeff\\code\\Data";
             var sourceFile = "RawDeckData.xml.mangled.txt";
-            
+
             var fileName = Path.Combine(sourceFolder, sourceFile);
 
             var success = theDeck.LoadFile(fileName);
@@ -69,7 +70,7 @@ namespace BakersGame
 
                     topCard = theCardColumn.LastOrDefault();
 
-                    if ((topCard is null && thisCard.Rank == CardRank.Ace) 
+                    if ((topCard is null && thisCard.Rank == CardRank.Ace)
                         || (topCard is not null && topCard.Suit == thisCard.Suit && topCard.Rank + 1 == thisCard.Rank))
                     {
                         //pull card
@@ -114,7 +115,7 @@ namespace BakersGame
                 Card topCard;
                 var cardPlayed = false;
                 var thisPic = sender as PictureBox;
-                
+
                 var thisIndex = Convert.ToInt32(thisPic.Name.Remove(0, cardControlNamePrefix.Length));
                 var thisCard = theDeck.Cards[thisIndex];
 
@@ -166,7 +167,7 @@ namespace BakersGame
                                 thisCard.BakersGame.LocationIndex = intX;
                                 //now put it in
                                 Columns[intX].Add(thisCard);
-                                
+
                                 thisPic.Location = myRect.Location;
 
                                 cardPlayed = true;
@@ -186,7 +187,7 @@ namespace BakersGame
                                 thisCard.BakersGame.LocationIndex = intX;
                                 // //add to this column
                                 Columns[intX].Add(thisCard);
-                                
+
                                 thisPic.Left = theLeft + intX * theWidth + intX * theWidthOffset;
                                 thisPic.Top = theTop + ColumnLength * theHeightOffset;
 
@@ -214,7 +215,7 @@ namespace BakersGame
             {
                 var thisPicture = sender as PictureBox;
 
-                if (thisPicture != null) 
+                if (thisPicture != null)
                 {
                     thisPicture.Top += e.Y - oldY;
                     thisPicture.Left += e.X - oldX;
@@ -228,7 +229,7 @@ namespace BakersGame
             var totalCards = theDeck.Cards.Length;
 
             Foundation = new List<Card>[4].Select(_ => new List<Card>()).ToArray();
-            Columns = new List<Card>[8].Select(_ => new List<Card>()).ToArray();
+            Columns = new List<Card>[totalColumns].Select(_ => new List<Card>()).ToArray();
             Reserve = new Card[4];
 
             //clear any existing
@@ -250,7 +251,8 @@ namespace BakersGame
                     Location = new Point(theLeft + (theWidth + theWidthOffset) * theColumn, theTop + theHeightOffset * theRow),
                     Size = new Size(theWidth, theHeight),
                     SizeMode = PictureBoxSizeMode.StretchImage,
-                    Image = (Image)Properties.Resources.ResourceManager.GetObject(theCard.CardName)
+                    //Image = (Image)Properties.Resources.ResourceManager.GetObject(theCard.CardName)
+                    Image = Image.FromFile($"Images/Decks/{cardDeck}/{theCard.CardName}.png")
                 };
 
                 pictureBox.MouseDown += new MouseEventHandler(picCard_MouseDown);
@@ -277,7 +279,7 @@ namespace BakersGame
             //Foundation handled by right-click in mouse down
             if (location == BakersGameTable.BakersGameLocation.Column)
             {
-                 Columns[index].Remove(card);
+                Columns[index].Remove(card);
             }
 
             if (location == BakersGameTable.BakersGameLocation.Reserve)
