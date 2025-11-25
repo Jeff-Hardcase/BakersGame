@@ -116,7 +116,7 @@ namespace BakersGame
                 var cardPlayed = false;
                 var thisPic = sender as PictureBox;
 
-                var thisIndex = Convert.ToInt32(thisPic.Name.Remove(0, cardControlNamePrefix.Length));
+                var thisIndex = Convert.ToInt32(thisPic.Name[cardControlNamePrefix.Length..]);
                 var thisCard = theDeck.Cards[thisIndex];
 
                 // //trying to put it in reserve?
@@ -213,9 +213,7 @@ namespace BakersGame
         {
             if (isDragging)
             {
-                var thisPicture = sender as PictureBox;
-
-                if (thisPicture != null)
+                if (sender is PictureBox thisPicture)
                 {
                     thisPicture.Top += e.Y - oldY;
                     thisPicture.Left += e.X - oldX;
