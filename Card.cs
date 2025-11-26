@@ -32,6 +32,7 @@ namespace BakersGame
         private readonly int MaxRank = (int)Enum.GetValues<CardRank>().Max();
         public readonly int Value;
         public BakersGameTable BakersGame { get; set; }
+        public PictureBox CardPicture {  get; set; }
         public string CardName => GetCardName();
         public string LongName => GetLongName();
 

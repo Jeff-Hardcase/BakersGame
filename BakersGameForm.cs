@@ -56,20 +56,18 @@ namespace BakersGame
             var pictureBox = sender as PictureBox;
             var thisCard = GetCard(pictureBox);
 
-            if (IsPlayableCard(thisCard))
+            if (e.Button == MouseButtons.Right)
             {
-                if (e.Button == MouseButtons.Right)
-                {
-                    MoveCardToFoundation(pictureBox);
-                }
-                else
-                {
-                    pictureBox.BringToFront();
-                    isDragging = true;
-                    oldX = e.X;
-                    oldY = e.Y;
-                    cardStartLocation = pictureBox.Location;
-                }
+                MoveCardToFoundation(pictureBox);
+                AutoPlay();
+            }
+            else if (IsPlayableCard(thisCard))
+            {
+                pictureBox.BringToFront();
+                isDragging = true;
+                oldX = e.X;
+                oldY = e.Y;
+                cardStartLocation = pictureBox.Location;
             }
         }
 
@@ -165,12 +163,15 @@ namespace BakersGame
                     }
                 }
 
-                if (!cardPlayed)
+                if (cardPlayed)
+                {
+                    AutoPlay();
+                }
+                else
                 {
                     //put it back to start
                     thisPic.Location = cardStartLocation;
                 }
-
             }
 
             isDragging = false;
@@ -188,14 +189,41 @@ namespace BakersGame
 
         private void AutoPlay()
         {
-            //columns first
-            foreach(var column in Columns)
+            //assume autoplay on for now
+            bool reservePlayed;
+
+            do
             {
-                var lastCard = column.LastOrDefault();
+                reservePlayed = false;
+                bool cardPlayed;
 
+                do
+                {
+                    cardPlayed = false;
+                    //columns first
+                    foreach (var column in Columns)
+                    {
+                        var lastCard = column.LastOrDefault();
+                        var success = MoveCardToFoundation(lastCard?.CardPicture);
+
+                        if (success)
+                            cardPlayed = true;
+                    }
+                }
+
+                while (cardPlayed);
+
+                //now finish with reserve
+                foreach (var card in Reserve)
+                {
+                    var success = MoveCardToFoundation(card?.CardPicture);
+
+                    if (success)
+                        reservePlayed = true;
+                }
             }
+            while (reservePlayed);
         }
-
 
         private bool IsPlayableCard(Card card)
         {
@@ -225,8 +253,12 @@ namespace BakersGame
             return playableCard;
         }
 
-        private void MoveCardToFoundation(PictureBox pictureBox)
+        private bool MoveCardToFoundation(PictureBox pictureBox)
         {
+            //guard for null
+            if (pictureBox == null)
+                return false;
+
             Card thisCard = GetCard(pictureBox);
             int intX = 0;
             string strPanelName = "panelHome";
@@ -237,7 +269,7 @@ namespace BakersGame
 
             //exit if it is not a playable card
             if (!cardPlayable)
-                return;
+                return false;
 
             pictureBox.BringToFront();
 
@@ -274,6 +306,7 @@ namespace BakersGame
                 pictureBox.Location = thePanel.Location;
             }
 
+            return endLoop;
         }
 
         private Card GetCard(PictureBox pictureBox)
@@ -322,6 +355,7 @@ namespace BakersGame
 
                 theCard.BakersGame.Location = BakersGameTable.BakersGameLocation.Column;
                 theCard.BakersGame.LocationIndex = theColumn;
+                theCard.CardPicture = pictureBox;
 
                 Columns[theColumn].Add(theCard);
 
