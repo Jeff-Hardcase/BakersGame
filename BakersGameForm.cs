@@ -1,4 +1,5 @@
 
+
 namespace BakersGame
 {
     public partial class BakersGameForm : Form
@@ -53,56 +54,22 @@ namespace BakersGame
         private void picCard_MouseDown(object sender, MouseEventArgs e)
         {
             var pictureBox = sender as PictureBox;
-            pictureBox.BringToFront();
+            var thisCard = GetCard(pictureBox);
 
-            if (e.Button == MouseButtons.Right)
+            if (IsPlayableCard(thisCard))
             {
-                var theDeckIndex = Convert.ToInt32(pictureBox.Name[cardControlNamePrefix.Length..]);
-                Card thisCard = theDeck.Cards[theDeckIndex];
-                int intX = 0;
-                string strPanelName = "panelHome";
-                var endLoop = false;
-                Card topCard;
-
-                do
+                if (e.Button == MouseButtons.Right)
                 {
-                    var theCardColumn = Foundation[intX];
-
-                    topCard = theCardColumn.LastOrDefault();
-
-                    if ((topCard is null && thisCard.Rank == CardRank.Ace)
-                        || (topCard is not null && topCard.Suit == thisCard.Suit && topCard.Rank + 1 == thisCard.Rank))
-                    {
-                        //pull card
-                        RemoveCard(thisCard);
-                        //tag where it will be located
-                        thisCard.BakersGame.Location = BakersGameTable.BakersGameLocation.Foundation;
-                        thisCard.BakersGame.LocationIndex = intX;
-                        //put it at new location
-                        theCardColumn.Add(thisCard);
-                        strPanelName += $"{intX}";
-
-                        endLoop = true;
-                        break;
-                    }
-
-                    intX += 1;
+                    MoveCardToFoundation(pictureBox);
                 }
-                while (!(endLoop || intX > 3));
-
-                if (endLoop)
+                else
                 {
-                    var thePanel = this.Controls.Find(strPanelName, false).First() as Panel;
-
-                    pictureBox.Location = thePanel.Location;
+                    pictureBox.BringToFront();
+                    isDragging = true;
+                    oldX = e.X;
+                    oldY = e.Y;
+                    cardStartLocation = pictureBox.Location;
                 }
-            }
-            else
-            {
-                isDragging = true;
-                oldX = e.X;
-                oldY = e.Y;
-                cardStartLocation = pictureBox.Location;
             }
         }
 
@@ -211,14 +178,109 @@ namespace BakersGame
 
         private void picCard_MouseMove(object sender, MouseEventArgs e)
         {
-            if (isDragging)
+            if (isDragging && sender is PictureBox thisPicture)
             {
-                if (sender is PictureBox thisPicture)
+                thisPicture.Top += e.Y - oldY;
+                thisPicture.Left += e.X - oldX;
+                this.Refresh();
+            }
+        }
+
+        private void AutoPlay()
+        {
+            //columns first
+            foreach(var column in Columns)
+            {
+                var lastCard = column.LastOrDefault();
+
+            }
+        }
+
+
+        private bool IsPlayableCard(Card card)
+        {
+            var playableCard = false;
+            //it must be either a Reserve card or the last card in a Column
+            foreach (var reserve in Reserve)
+            {
+                if (reserve?.Value == card.Value)
                 {
-                    thisPicture.Top += e.Y - oldY;
-                    thisPicture.Left += e.X - oldX;
+                    playableCard = true;
+                    break;
                 }
             }
+
+            if (!playableCard)
+            {
+                foreach (var column in Columns)
+                {
+                    var lastCard = column.LastOrDefault();
+                    if (lastCard?.Value == card.Value)
+                    {
+                        playableCard = true;
+                        break;
+                    }
+                }
+            }
+            return playableCard;
+        }
+
+        private void MoveCardToFoundation(PictureBox pictureBox)
+        {
+            Card thisCard = GetCard(pictureBox);
+            int intX = 0;
+            string strPanelName = "panelHome";
+            var endLoop = false;
+            Card topCard;
+
+            var cardPlayable = IsPlayableCard(thisCard);
+
+            //exit if it is not a playable card
+            if (!cardPlayable)
+                return;
+
+            pictureBox.BringToFront();
+
+            do
+            {
+                var theFoundationStack = Foundation[intX];
+
+                topCard = theFoundationStack.LastOrDefault();
+
+                if ((topCard is null && thisCard.Rank == CardRank.Ace)
+                    || (topCard is not null && topCard.Suit == thisCard.Suit && topCard.Rank + 1 == thisCard.Rank))
+                {
+                    //pull card
+                    RemoveCard(thisCard);
+                    //tag where it will be located
+                    thisCard.BakersGame.Location = BakersGameTable.BakersGameLocation.Foundation;
+                    thisCard.BakersGame.LocationIndex = intX;
+                    //put it at new location
+                    theFoundationStack.Add(thisCard);
+                    strPanelName += $"{intX}";
+
+                    endLoop = true;
+                    break;
+                }
+
+                intX += 1;
+            }
+            while (!(endLoop || intX > 3));
+
+            if (endLoop)
+            {
+                var thePanel = this.Controls.Find(strPanelName, false).First() as Panel;
+
+                pictureBox.Location = thePanel.Location;
+            }
+
+        }
+
+        private Card GetCard(PictureBox pictureBox)
+        {
+            var theDeckIndex = Convert.ToInt32(pictureBox.Name[cardControlNamePrefix.Length..]);
+
+            return theDeck.Cards[theDeckIndex];
         }
 
         private void PlayGame()
@@ -249,7 +311,6 @@ namespace BakersGame
                     Location = new Point(theLeft + (theWidth + theWidthOffset) * theColumn, theTop + theHeightOffset * theRow),
                     Size = new Size(theWidth, theHeight),
                     SizeMode = PictureBoxSizeMode.StretchImage,
-                    //Image = (Image)Properties.Resources.ResourceManager.GetObject(theCard.CardName)
                     Image = Image.FromFile($"Images/Decks/{cardDeck}/{theCard.CardName}.png")
                 };
 
