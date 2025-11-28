@@ -260,10 +260,6 @@ namespace BakersGame
                 return false;
 
             Card thisCard = GetCard(pictureBox);
-            int intX = 0;
-            string strPanelName = "panelHome";
-            var endLoop = false;
-            Card topCard;
 
             var cardPlayable = IsPlayableCard(thisCard);
 
@@ -271,16 +267,18 @@ namespace BakersGame
             if (!cardPlayable)
                 return false;
 
+            int intX = 0;
+            string strPanelName = "panelHome";
+            var success = false;
+
             pictureBox.BringToFront();
 
-            do
+            foreach(var foundation in Foundation)
             {
-                var theFoundationStack = Foundation[intX];
+                var foundationCard = foundation.LastOrDefault();
 
-                topCard = theFoundationStack.LastOrDefault();
-
-                if ((topCard is null && thisCard.Rank == CardRank.Ace)
-                    || (topCard is not null && topCard.Suit == thisCard.Suit && topCard.Rank + 1 == thisCard.Rank))
+                if ((foundationCard is null && thisCard.Rank == CardRank.Ace) 
+                    || (foundationCard is not null && foundationCard.Suit == thisCard.Suit && foundationCard.Rank + 1 == thisCard.Rank))
                 {
                     //pull card
                     RemoveCard(thisCard);
@@ -288,25 +286,18 @@ namespace BakersGame
                     thisCard.BakersGame.Location = BakersGameTable.BakersGameLocation.Foundation;
                     thisCard.BakersGame.LocationIndex = intX;
                     //put it at new location
-                    theFoundationStack.Add(thisCard);
-                    strPanelName += $"{intX}";
+                    foundation.Add(thisCard);
 
-                    endLoop = true;
+                    var thePanel = this.Controls.Find($"{strPanelName}{intX}", false).First() as Panel;
+                    pictureBox.Location = thePanel.Location;
+
+                    success = true;
                     break;
                 }
-
                 intX += 1;
             }
-            while (!(endLoop || intX > 3));
 
-            if (endLoop)
-            {
-                var thePanel = this.Controls.Find(strPanelName, false).First() as Panel;
-
-                pictureBox.Location = thePanel.Location;
-            }
-
-            return endLoop;
+            return success;
         }
 
         private Card GetCard(PictureBox pictureBox)
