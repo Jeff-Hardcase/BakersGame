@@ -227,30 +227,8 @@ namespace BakersGame
 
         private bool IsPlayableCard(Card card)
         {
-            var playableCard = false;
-            //it must be either a Reserve card or the last card in a Column
-            foreach (var reserve in Reserve)
-            {
-                if (reserve?.Value == card.Value)
-                {
-                    playableCard = true;
-                    break;
-                }
-            }
-
-            if (!playableCard)
-            {
-                foreach (var column in Columns)
-                {
-                    var lastCard = column.LastOrDefault();
-                    if (lastCard?.Value == card.Value)
-                    {
-                        playableCard = true;
-                        break;
-                    }
-                }
-            }
-            return playableCard;
+            return Reserve.Any(reserve => reserve?.Value == card.Value) ||
+                    Columns.Any(column => column.LastOrDefault()?.Value == card.Value);
         }
 
         private bool MoveCardToFoundation(PictureBox pictureBox)
@@ -273,11 +251,11 @@ namespace BakersGame
 
             pictureBox.BringToFront();
 
-            foreach(var foundation in Foundation)
+            foreach (var foundation in Foundation)
             {
                 var foundationCard = foundation.LastOrDefault();
 
-                if ((foundationCard is null && thisCard.Rank == CardRank.Ace) 
+                if ((foundationCard is null && thisCard.Rank == CardRank.Ace)
                     || (foundationCard is not null && foundationCard.Suit == thisCard.Suit && foundationCard.Rank + 1 == thisCard.Rank))
                 {
                     //pull card
